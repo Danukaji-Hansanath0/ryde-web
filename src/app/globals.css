@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette: Midnight (Backgrounds) */
+  --midnight-base: #0B0F19;
+  --midnight-dark: #151C2C;
+  --midnight-light: #2A3447;
+  --midnight-border: #2D3748;
+
+  /* Palette: Royal (Primary Blue) */
+  --royal-base: #3B82F6;
+  --royal-light: #60A5FA;
+  --royal-dark: #2563EB;
+
+  /* Palette: Flare (Accent Red) */
+  --flare-base: #EF4444;
+  --flare-light: #F87171;
+  --flare-dark: #DC2626;
+
+  /* Palette: Chalk & Slate (Text/Neutral) */
+  --chalk-base: #FFFFFF;
+  --chalk-contrast: #F8FAFC;
+  --chalk-muted: #F1F5F9;
+  --slate-base: #94A3B8;
+  --slate-dark: #64748B;
+  --slate-darker: #475569;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Semantic Colors mapping to Palette */
+  --color-background: var(--midnight-base);
+  --color-surface: var(--midnight-dark);
+  --color-surface-hover: var(--midnight-light);
+  --color-border: var(--midnight-border);
+
+  --color-primary: var(--royal-base);
+  --color-primary-light: var(--royal-light);
+  --color-primary-dark: var(--royal-dark);
+
+  --color-accent: var(--flare-base);
+  --color-accent-light: var(--flare-light);
+  --color-accent-dark: var(--flare-dark);
+
+  --color-text-primary: var(--chalk-base);
+  --color-text-secondary: var(--slate-base);
+  --color-text-light: var(--chalk-contrast);
+  --color-text-muted: var(--chalk-muted);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: Arial, Helvetica, sans-serif;
+  position: relative;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Organic Noise Texture */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Custom Utilities */
+.glass-premium {
+  background: rgba(21, 28, 44, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-modern {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-modern:active {
+  transform: scale(0.98);
+}
+
+.btn-modern::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.4s ease-out;
+}
+
+.btn-modern:hover::after {
+  transform: translate(-50%, -50%) scale(2);
 }
