@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import ThreeBackground from '@/components/ThreeBackground';
-import { FileText, Car, RotateCcw, Wrench, CalendarClock, CreditCard, ShieldCheck, UserCog, Scale } from 'lucide-react';
+import { FileText, Car, RotateCcw, Wrench, CalendarClock, CreditCard, ShieldCheck, UserCog, Scale, LucideIcon } from 'lucide-react';
 
 interface SubPoint {
     title: string;
@@ -11,7 +11,7 @@ interface SubPoint {
 }
 
 interface Section {
-    icon: React.ElementType;
+    icon: LucideIcon;
     title: string;
     intro?: string;
     subpoints?: SubPoint[];

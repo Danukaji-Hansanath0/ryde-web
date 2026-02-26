@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import ThreeBackground from '@/components/ThreeBackground';
 import { Search, SlidersHorizontal, Grid3x3, List, Star, Users, Fuel, Gauge, Calendar, ArrowRight, MapPin, Shield } from 'lucide-react';
 import { COLORS } from '@/constants/colours';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import vehicleService, { Vehicle, VehicleSearchRequest } from '@/services/vehicleService';
@@ -14,7 +14,7 @@ import BookingWizard from '@/components/booking/BookingWizard';
 type ViewMode = 'grid' | 'list';
 type SortOption = 'dailyRentalPrice' | 'vehicleModel' | 'averageRating';
 
-export default function FleetPage() {
+function FleetPageContent() {
     const searchParams = useSearchParams();
 
     // Search State — seed from URL params if coming from the home search widget
@@ -371,5 +371,17 @@ export default function FleetPage() {
                 />
             )}
         </div>
+    );
+}
+
+export default function FleetPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center py-20 bg-black min-h-screen text-white pt-24">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        }>
+            <FleetPageContent />
+        </Suspense>
     );
 }
