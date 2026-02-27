@@ -347,29 +347,28 @@ class VehicleService {
             const carOwnerId = vehicle.carOwnerId;
             console.log(`Fetching equipments for owner ${carOwnerId} (vehicle ${vehicleId})`);
 
-            // Use the endpoint: /api/owner-vehicle-equipments/car-owner/{carOwnerId}
-            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-vehicle-equipments/car-owner/${carOwnerId}`, {
+            // Use the endpoint provided by the user: /api/owner-extra-equipments/owner/{ownerId}
+            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-extra-equipments/owner/${carOwnerId}`, {
                 method: 'GET',
             });
 
             if (response.status === 404 || response.status === 204) {
-                console.log(`No equipments found for vehicle ${vehicleId}`);
+                console.log(`No equipments found for owner ${carOwnerId}`);
                 return [];
             }
 
             const text = await response.text();
 
-            const url = `${API_BASE_URL}/api/owner-vehicle-equipments/car-owner/${carOwnerId}`;
+            const url = `${API_BASE_URL}/api/owner-extra-equipments/owner/${carOwnerId}`;
             // Check if response is XML (error response)
             if (text.trim().startsWith('<')) {
                 console.warn(`Equipment endpoint (${url}) returned XML error, continuing without equipments`);
-                // Don't throw - just return empty array so booking can continue
                 return [];
             }
 
             // If server error, log and return empty (don't block booking)
             if (response.status >= 500) {
-                console.warn(`Server error fetching equipments for vehicle ${vehicleId}: ${response.status}`);
+                console.warn(`Server error fetching equipments for owner ${carOwnerId}: ${response.status}`);
                 return [];
             }
 
@@ -387,11 +386,7 @@ class VehicleService {
                 return [];
             }
 
-            const allEquipments = Array.isArray(data) ? data : [data];
-
-            // Filter by vehicle ID to ensure we only show equipments for this specific vehicle
-            // The API returns equipments for the owner, which might include equipments for other vehicles
-            return allEquipments.filter((e: Equipment) => e.carOwnerVehicleId === vehicleId);
+            return Array.isArray(data) ? data : [data];
 
         } catch (error) {
             // Log but don't throw - equipments are optional
