@@ -1,4 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.rydeflexi.com';
+const CDN_BASE_URL = process.env.NEXT_PUBLIC_CDN_BASE_URL || 'https://cdn.orysone.com';
 
 export interface VehicleImage {
     colorId: number;
@@ -344,11 +345,11 @@ class VehicleService {
                 return [];
             }
 
-            const carOwnerId = vehicle.carOwnerId;
-            console.log(`Fetching equipments for owner ${carOwnerId} (vehicle ${vehicleId})`);
+            const ownerId = vehicle.carOwnerId;
+            console.log(`Fetching equipments for owner ${ownerId} (vehicle ${vehicleId})`);
 
-            // Use the endpoint: /api/owner-vehicle-equipments/car-owner/{carOwnerId}
-            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-vehicle-equipments/car-owner/${carOwnerId}`, {
+            // Use the endpoint: /api/owner-extra-equipments/owner/{ownerId}
+            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-extra-equipments/owner/${ownerId}`, {
                 method: 'GET',
             });
 
@@ -359,7 +360,7 @@ class VehicleService {
 
             const text = await response.text();
 
-            const url = `${API_BASE_URL}/api/owner-vehicle-equipments/car-owner/${carOwnerId}`;
+            const url = `${API_BASE_URL}/api/owner-extra-equipments/owner/${ownerId}`;
             // Check if response is XML (error response)
             if (text.trim().startsWith('<')) {
                 console.warn(`Equipment endpoint (${url}) returned XML error, continuing without equipments`);
@@ -401,4 +402,5 @@ class VehicleService {
     }
 }
 
+export { CDN_BASE_URL };
 export default new VehicleService();
