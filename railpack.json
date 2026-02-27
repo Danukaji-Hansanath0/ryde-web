@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "name": "ryde-web",
+  "build": {
+    "commands": {
+      "install": "npm ci",
+      "build": "npm run build"
+    }
+  },
+  "deploy": {
+    "startCommand": "node server.js",
+    "port": 8080,
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": "8080",
+      "HOSTNAME": "0.0.0.0"
+    }
+  }
+}
