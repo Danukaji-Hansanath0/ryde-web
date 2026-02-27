@@ -81,8 +81,8 @@ export interface VehicleSearchRequest {
 
 export interface Insurance {
     id: number;
-    vehicleId: number;
-    vehicleName: string;
+    ownerId: number;
+    ownerName: string;
     insuranceId: number;
     insuranceType: string;
     insuranceName: string;
@@ -93,15 +93,33 @@ export interface Insurance {
     monthlyPrice: number;
     isIncluded: boolean;
     isActive: boolean;
-    excessAmount: number;
-    depositAmount: number;
-    coverageLimit: number;
-    maxClaimValue: number;
-    ownerNotes: string;
-    isCustom: boolean;
+    excessAmount: number | null;
+    depositAmount: number | null;
+    ownerNotes: string | null;
     createdAt: string;
     updatedAt: string;
 }
+
+const DEFAULT_BASIC_INSURANCE: Insurance = {
+    id: 0,
+    ownerId: 0,
+    ownerName: '',
+    insuranceId: 1,
+    insuranceType: 'BASIC',
+    insuranceName: 'Basic Protection',
+    insuranceDescription: 'Basic liability coverage for your rental',
+    coveragePoints: ['Third party liability', 'Theft protection', 'Fire damage'],
+    dailyPrice: 0,
+    weeklyPrice: 0,
+    monthlyPrice: 0,
+    isIncluded: true,
+    isActive: true,
+    excessAmount: null,
+    depositAmount: null,
+    ownerNotes: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+};
 
 export interface Equipment {
     id: number;
@@ -280,34 +298,36 @@ class VehicleService {
     /**
      * Get owner insurances by ID (Fetching via Owner ID)
      */
-    async getOwnerInsurances(vehicleId: number): Promise<Insurance[]> {
+    async getOwnerInsurances(vehicleId: number, ownerName?: string): Promise<Insurance[]> {
         try {
             // First, get the vehicle details to find the owner ID
             const vehicle = await this.getVehicleDetails(vehicleId);
             if (!vehicle || !vehicle.carOwnerId) {
                 console.error('Vehicle or carOwnerId not found for vehicle:', vehicleId);
-                return [];
+                return [{ ...DEFAULT_BASIC_INSURANCE, ownerId: 0, ownerName: vehicle?.ownerName || '' }];
             }
 
-            const carOwnerId = vehicle.carOwnerId;
-            console.log(`Fetching insurances for owner ${carOwnerId} (vehicle ${vehicleId})`);
+            const ownerId = vehicle.carOwnerId;
+            const ownerNameStr = vehicle.ownerName || ownerName || '';
+            console.log(`Fetching insurances for owner ${ownerId} (vehicle ${vehicleId})`);
 
-            // Use the endpoint provided by the user: /api/owner-vehicle-insurances/car-owner/{carOwnerId}
-            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-vehicle-insurances/car-owner/${carOwnerId}`, {
+            // Use the new endpoint: /api/owner-insurances/owner/{ownerId}
+            const response = await this.fetchWithRetry(`${API_BASE_URL}/api/owner-insurances/owner/${ownerId}`, {
                 method: 'GET',
             });
 
             if (response.status === 404 || response.status === 204) {
-                return [];
+                console.log(`No insurances found for owner ${ownerId}, returning default BASIC protection`);
+                return [{ ...DEFAULT_BASIC_INSURANCE, ownerId, ownerName: ownerNameStr }];
             }
 
             const text = await response.text();
 
-            const url = `${API_BASE_URL}/api/owner-vehicle-insurances/car-owner/${carOwnerId}`;
+            const url = `${API_BASE_URL}/api/owner-insurances/owner/${ownerId}`;
             // Check if response is XML (error response)
             if (text.trim().startsWith('<')) {
-                console.warn(`Insurance endpoint (${url}) returned XML error, continuing without insurances`);
-                return [];
+                console.warn(`Insurance endpoint (${url}) returned XML error, returning default BASIC protection`);
+                return [{ ...DEFAULT_BASIC_INSURANCE, ownerId, ownerName: ownerNameStr }];
             }
 
             let data: any = [];
@@ -319,17 +339,27 @@ class VehicleService {
                 if (!response.ok) {
                     throw new Error(`Server returned an error (${response.status}). Please try again later.`);
                 }
-                return [];
+                return [{ ...DEFAULT_BASIC_INSURANCE, ownerId, ownerName: ownerNameStr }];
             }
 
             if (!response.ok) {
                 throw new Error(data.message || `HTTP error! status: ${response.status}`);
             }
 
-            return Array.isArray(data) ? data : [data];
+            const insurances = Array.isArray(data) ? data : [data];
+            
+            // If no insurances returned, provide default BASIC protection
+            if (insurances.length === 0) {
+                console.log(`Empty insurances array for owner ${ownerId}, returning default BASIC protection`);
+                return [{ ...DEFAULT_BASIC_INSURANCE, ownerId, ownerName: ownerNameStr }];
+            }
+
+            return insurances;
         } catch (error) {
             console.error('Get owner insurances error:', error);
-            throw error;
+            // Return default BASIC protection on error
+            const vehicle = await this.getVehicleDetails(vehicleId).catch(() => null);
+            return [{ ...DEFAULT_BASIC_INSURANCE, ownerId: vehicle?.carOwnerId || 0, ownerName: vehicle?.ownerName || '' }];
         }
     }
 
