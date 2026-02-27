@@ -93,7 +93,7 @@ export default function FleetSection() {
             popularity: 'New Arrival'
           };
 
-          const minPrice = Math.min(...cars.map(c => c.dailyRentalPrice));
+          const minPrice = Math.min(...cars.map(c => c.dailyPriceWithCommission ?? c.dailyRentalPrice));
           const avgRating = cars.reduce((acc, c) => acc + (c.averageRating || 0), 0) / cars.length;
 
           return {

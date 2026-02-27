@@ -280,7 +280,7 @@ function FleetPageContent() {
                                             <div className="flex justify-between items-center pt-4 border-t border-gray-300 dark:border-gray-700">
                                                 <div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">Daily Rate</div>
-                                                    <div className="text-2xl font-bold text-blue-500">${car.dailyRentalPrice}<span className="text-sm text-gray-500 dark:text-gray-400">/day</span></div>
+                                                    <div className="text-2xl font-bold text-blue-500">${car.dailyPriceWithCommission ?? car.dailyRentalPrice}<span className="text-sm text-gray-500 dark:text-gray-400">/day</span></div>
                                                 </div>
                                                 <button
                                                     onClick={() => handleBookNow(car)}
@@ -332,7 +332,7 @@ function FleetPageContent() {
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">Daily Rate</div>
-                                                    <div className="text-3xl font-bold text-blue-500">${car.dailyRentalPrice}<span className="text-sm text-gray-500 dark:text-gray-400">/day</span></div>
+                                                    <div className="text-3xl font-bold text-blue-500">${car.dailyPriceWithCommission ?? car.dailyRentalPrice}<span className="text-sm text-gray-500 dark:text-gray-400">/day</span></div>
                                                 </div>
                                                 <button
                                                     onClick={() => handleBookNow(car)}
@@ -366,6 +366,7 @@ function FleetPageContent() {
                     onClose={() => setIsWizardOpen(false)}
                     vehicleId={selectedVehicle.id.toString()}
                     dailyPrice={selectedVehicle.dailyRentalPrice}
+                    dailyPriceWithCommission={selectedVehicle.dailyPriceWithCommission}
                     startDate={new Date(startDate)}
                     endDate={new Date(endDate)}
                 />

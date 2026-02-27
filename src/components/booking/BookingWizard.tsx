@@ -11,15 +11,17 @@ import Link from 'next/link';
 interface BookingWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    vehicleId: string; // The ID from URL is string, but services expect number. I'll convert.
+    vehicleId: string;
     dailyPrice: number;
+    dailyPriceWithCommission: number | null;
     startDate: Date;
     endDate: Date;
 }
 
 type Step = 'insurance' | 'equipment' | 'summary';
 
-export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, startDate, endDate }: BookingWizardProps) {
+export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, dailyPriceWithCommission, startDate, endDate }: BookingWizardProps) {
+    const effectiveDailyPrice = dailyPriceWithCommission ?? dailyPrice;
     const [localStartDate, setLocalStartDate] = useState(startDate);
     const [localEndDate, setLocalEndDate] = useState(endDate);
     const [step, setStep] = useState<Step>('insurance');
@@ -127,7 +129,7 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
     };
 
     const calculateTotal = () => {
-        let total = dailyPrice * rentalDays;
+        let total = effectiveDailyPrice * rentalDays;
 
         if (selectedInsurance) {
             total += selectedInsurance.dailyPrice * rentalDays;
@@ -384,7 +386,7 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                                                 </div>
                                                 <div className="flex justify-between text-lg font-bold">
                                                     <span>Vehicle Total</span>
-                                                    <span>${(dailyPrice * rentalDays).toFixed(2)}</span>
+                                                    <span>${(effectiveDailyPrice * rentalDays).toFixed(2)}</span>
                                                 </div>
                                             </div>
 

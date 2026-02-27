@@ -51,7 +51,8 @@ export default function CarDetailsPage() {
     // Calculate rental days
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const rentalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-    const totalPrice = rentalDays * (car?.dailyRentalPrice || 0);
+    const dailyPriceWithCommission = car?.dailyPriceWithCommission ?? car?.dailyRentalPrice ?? 0;
+    const totalPrice = rentalDays * dailyPriceWithCommission;
 
     const formatDateForInput = (date: Date) => {
         try {
@@ -149,7 +150,7 @@ export default function CarDetailsPage() {
                     >
                         <h1 className="text-4xl md:text-6xl font-bold mb-4">{car.vehicleMakeName} {car.vehicleModel}</h1>
                         <p className="text-3xl font-bold text-blue-500 mb-8">
-                            ${car.dailyRentalPrice}
+                            ${dailyPriceWithCommission}
                             <span className="text-lg text-gray-400 font-normal"> / day</span>
                         </p>
 
@@ -237,7 +238,7 @@ export default function CarDetailsPage() {
                             <div className="space-y-3 border-t border-white/10 pt-6">
                                 <div className="flex justify-between text-gray-400">
                                     <span>Daily Rate</span>
-                                    <span>${car.dailyRentalPrice}</span>
+                                    <span>${dailyPriceWithCommission}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-400">
                                     <span>Duration</span>
@@ -278,6 +279,7 @@ export default function CarDetailsPage() {
                 onClose={() => setIsWizardOpen(false)}
                 vehicleId={car.id.toString()}
                 dailyPrice={car.dailyRentalPrice}
+                dailyPriceWithCommission={car.dailyPriceWithCommission}
                 startDate={startDate}
                 endDate={endDate}
             />

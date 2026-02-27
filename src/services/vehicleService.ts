@@ -35,6 +35,14 @@ export interface Vehicle {
     hourlyRentalPrice: number;
     weeklyRentalPrice: number;
     monthlyRentalPrice: number;
+    dailyPriceWithCommission: number | null;
+    hourlyPriceWithCommission: number | null;
+    weeklyPriceWithCommission: number | null;
+    monthlyPriceWithCommission: number | null;
+    bodyTypeCommissionPercentage: number;
+    dailyCommissionAmount: number | null;
+    weeklyCommissionAmount: number | null;
+    monthlyCommissionAmount: number | null;
     location: string;
     availabilityStatus: string;
     availableFrom: string;
