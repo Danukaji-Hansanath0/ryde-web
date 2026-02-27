@@ -402,5 +402,13 @@ class VehicleService {
     }
 }
 
+export function getFullImageUrl(partialUrl: string | undefined | null): string {
+    if (!partialUrl) return '';
+    if (partialUrl.startsWith('http://') || partialUrl.startsWith('https://')) {
+        return partialUrl;
+    }
+    return `${CDN_BASE_URL}/${partialUrl}`;
+}
+
 export { CDN_BASE_URL };
 export default new VehicleService();

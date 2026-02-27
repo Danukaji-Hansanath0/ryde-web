@@ -7,7 +7,7 @@ import { COLORS } from '@/constants/colours';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import vehicleService, { Vehicle, VehicleSearchRequest } from '@/services/vehicleService';
+import vehicleService, { Vehicle, VehicleSearchRequest, getFullImageUrl } from '@/services/vehicleService';
 import authService from '@/services/authService';
 import BookingWizard from '@/components/booking/BookingWizard';
 
@@ -243,7 +243,7 @@ function FleetPageContent() {
                                         <div className="relative h-48 bg-gray-200 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
                                             {car.colorImages && car.colorImages.length > 0 ? (
                                                 <img
-                                                    src={car.colorImages[0].imageUrl}
+                                                    src={getFullImageUrl(car.colorImages[0].imageUrl)}
                                                     alt={`${car.vehicleMakeName} ${car.vehicleModel}`}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -298,7 +298,7 @@ function FleetPageContent() {
                                         <div className="w-full md:w-64 h-40 bg-gray-200 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                                             {car.colorImages && car.colorImages.length > 0 ? (
                                                 <img
-                                                    src={car.colorImages[0].imageUrl}
+                                                    src={getFullImageUrl(car.colorImages[0].imageUrl)}
                                                     alt={`${car.vehicleMakeName} ${car.vehicleModel}`}
                                                     className="w-full h-full object-cover"
                                                 />

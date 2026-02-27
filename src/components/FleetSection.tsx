@@ -5,7 +5,7 @@ import { Car, Fuel, Users, Shield, Star, ArrowRight, Loader2 } from 'lucide-reac
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import vehicleService, { Vehicle } from '@/services/vehicleService';
+import vehicleService, { Vehicle, getFullImageUrl } from '@/services/vehicleService';
 
 interface CategoryGroup {
   name: string;
@@ -88,7 +88,7 @@ export default function FleetSection() {
         const mappedCategories: CategoryGroup[] = Object.entries(groups).map(([name, cars]) => {
           const meta = CATEGORY_META[name] || {
             description: 'High quality vehicles for any trip',
-            image: cars[0].colorImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=250&fit=crop&auto=format',
+            image: getFullImageUrl(cars[0].colorImages?.[0]?.imageUrl) || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=250&fit=crop&auto=format',
             features: ['Premium Quality', 'Well Maintained'],
             popularity: 'New Arrival'
           };

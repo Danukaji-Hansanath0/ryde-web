@@ -6,7 +6,7 @@ import ThreeBackground from '@/components/ThreeBackground';
 import { ArrowLeft, Users, Gauge, Fuel, Check, Calendar, Shield, Loader2 } from 'lucide-react';
 import BookingWizard from '@/components/booking/BookingWizard';
 import authService from '@/services/authService';
-import vehicleService, { Vehicle } from '@/services/vehicleService';
+import vehicleService, { Vehicle, getFullImageUrl } from '@/services/vehicleService';
 import { useState, useEffect } from 'react';
 
 export default function CarDetailsPage() {
@@ -130,7 +130,7 @@ export default function CarDetailsPage() {
                         className="relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden glass-premium"
                     >
                         <img
-                            src={car.colorImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&auto=format'}
+                            src={getFullImageUrl(car.colorImages?.[0]?.imageUrl) || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&auto=format'}
                             alt={`${car.vehicleMakeName} ${car.vehicleModel}`}
                             className="w-full h-full object-cover"
                         />
