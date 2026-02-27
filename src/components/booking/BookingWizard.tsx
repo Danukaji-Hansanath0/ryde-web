@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, Plus, Minus, Info, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, Shield, Plus, Minus, Info, Check, ArrowRight, ArrowLeft, MapPin } from 'lucide-react';
 import vehicleService, { Insurance, Equipment } from '@/services/vehicleService';
 import bookingService, { BookingRequest } from '@/services/bookingService';
 import authService from '@/services/authService';
@@ -17,7 +17,7 @@ interface BookingWizardProps {
     endDate: Date;
 }
 
-type Step = 'insurance' | 'equipment' | 'summary';
+type Step = 'insurance' | 'equipment' | 'address' | 'summary';
 
 export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, startDate, endDate }: BookingWizardProps) {
     const [localStartDate, setLocalStartDate] = useState(startDate);
@@ -27,6 +27,9 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
     const [equipments, setEquipments] = useState<Equipment[]>([]);
     const [selectedInsurance, setSelectedInsurance] = useState<Insurance | null>(null);
     const [selectedEquipments, setSelectedEquipments] = useState<{ [id: number]: number }>({}); // equipmentId -> quantity
+    const [pickupAddress, setPickupAddress] = useState('');
+    const [dropoffAddress, setDropoffAddress] = useState('');
+    const [sameAsPickup, setSameAsPickup] = useState(true);
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -165,8 +168,8 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                 endDate: localEndDate.toISOString(),
                 rentalDuration: `${rentalDays} Days`,
                 insuranceId: selectedInsurance.id,
-                pickupLocation: "Default Pickup",
-                dropoffLocation: "Default Dropoff",
+                pickupLocation: pickupAddress || "Default Pickup",
+                dropoffLocation: sameAsPickup ? (pickupAddress || "Default Pickup") : (dropoffAddress || "Default Dropoff"),
                 equipmentList: equipmentList,
                 specialRequests: ""
             };
@@ -242,7 +245,7 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                     <div className="p-6 border-b border-white/10 flex justify-between items-center">
                         <div>
                             <h2 className="text-2xl font-bold text-white">Complete Booking</h2>
-                            <p className="text-gray-400 text-sm">Step {step === 'insurance' ? 1 : step === 'equipment' ? 2 : 3} of 3</p>
+                            <p className="text-gray-400 text-sm">Step {step === 'insurance' ? 1 : step === 'equipment' ? 2 : step === 'address' ? 3 : 4} of 4</p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                             <X size={24} className="text-gray-400" />
@@ -348,7 +351,64 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                                     </div>
                                 )}
 
-                                {/* Step 3: Summary */}
+                                {/* Step 3: Address */}
+                                {step === 'address' && (
+                                    <div className="space-y-6">
+                                        <h3 className="text-xl font-bold text-white mb-4">Delivery Details</h3>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Pickup Address</label>
+                                                <div className="relative">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                                                        <MapPin size={18} />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={pickupAddress}
+                                                        onChange={(e) => setPickupAddress(e.target.value)}
+                                                        placeholder="Enter pickup location"
+                                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-blue-500 outline-none transition-colors"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 py-2">
+                                                <button
+                                                    onClick={() => setSameAsPickup(!sameAsPickup)}
+                                                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${sameAsPickup ? 'bg-blue-600 border-blue-600' : 'border-white/20'
+                                                        }`}
+                                                >
+                                                    {sameAsPickup && <Check size={14} className="text-white" />}
+                                                </button>
+                                                <span className="text-sm text-gray-400">Return to same location</span>
+                                            </div>
+
+                                            {!sameAsPickup && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                >
+                                                    <label className="block text-sm font-medium text-gray-400 mb-2">Drop-off Address</label>
+                                                    <div className="relative">
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                                                            <MapPin size={18} />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            value={dropoffAddress}
+                                                            onChange={(e) => setDropoffAddress(e.target.value)}
+                                                            placeholder="Enter drop-off location"
+                                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-blue-500 outline-none transition-colors"
+                                                        />
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 4: Summary */}
                                 {step === 'summary' && (
                                     <div className="space-y-6">
                                         <h3 className="text-xl font-bold text-white mb-4">Booking Summary</h3>
@@ -385,6 +445,20 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                                                 <div className="flex justify-between text-lg font-bold">
                                                     <span>Vehicle Total</span>
                                                     <span>${(dailyPrice * rentalDays).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Location Details */}
+                                            <div className="border-b border-white/10 pb-4">
+                                                <div className="flex justify-between text-sm mb-2">
+                                                    <span className="text-gray-400">Pickup</span>
+                                                    <span className="text-right max-w-[200px] truncate">{pickupAddress || "Not specified"}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">Drop-off</span>
+                                                    <span className="text-right max-w-[200px] truncate">
+                                                        {sameAsPickup ? (pickupAddress || "Not specified") : (dropoffAddress || "Not specified")}
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -434,7 +508,11 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                     <div className="p-6 border-t border-white/10 bg-[#0f1115] flex justify-between items-center gap-4">
                         {step !== 'insurance' ? (
                             <button
-                                onClick={() => setStep(step === 'summary' ? 'equipment' : 'insurance')}
+                                onClick={() => {
+                                    if (step === 'summary') setStep('address');
+                                    else if (step === 'address') setStep('equipment');
+                                    else setStep('insurance');
+                                }}
                                 className="px-6 py-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center gap-2"
                             >
                                 <ArrowLeft size={18} />
@@ -464,8 +542,16 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                             </button>
                         ) : (
                             <button
-                                onClick={() => setStep(step === 'insurance' ? 'equipment' : 'summary')}
-                                disabled={step === 'insurance' && !selectedInsurance}
+                                onClick={() => {
+                                    if (step === 'insurance') setStep('equipment');
+                                    else if (step === 'equipment') setStep('address');
+                                    else setStep('summary');
+                                }}
+                                disabled={
+                                    (step === 'insurance' && !selectedInsurance) ||
+                                    (step === 'address' && !pickupAddress) ||
+                                    (step === 'address' && !sameAsPickup && !dropoffAddress)
+                                }
                                 className="px-8 py-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 Next Step
