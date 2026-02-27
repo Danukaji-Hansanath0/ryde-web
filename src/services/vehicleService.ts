@@ -390,9 +390,31 @@ class VehicleService {
 
             const allEquipments = Array.isArray(data) ? data : [data];
 
-            // Filter by vehicle ID to ensure we only show equipments for this specific vehicle
-            // The API returns equipments for the owner, which might include equipments for other vehicles
-            return allEquipments.filter((e: Equipment) => e.carOwnerVehicleId === vehicleId);
+            // Map API response to Equipment interface (API returns owner-level equipments without carOwnerVehicleId)
+            const mappedEquipments: Equipment[] = allEquipments.map((e: any) => ({
+                id: e.id,
+                carOwnerVehicleId: vehicleId,
+                vehicleDisplayName: `${vehicle.vehicleMakeName} ${vehicle.vehicleModel}` || '',
+                extraEquipmentId: e.extraEquipmentId,
+                equipmentName: e.equipmentName,
+                equipmentCategory: e.equipmentCategory,
+                basePrice: e.basePrice,
+                fullPrice: e.fullPrice,
+                basePriceWithCommission: e.basePriceWithCommission,
+                fullPriceWithCommission: e.fullPriceWithCommission,
+                commissionPercentage: e.commissionPercentage,
+                baseCommissionAmount: e.basePrice * (e.commissionPercentage / 100),
+                fullCommissionAmount: e.fullPrice * (e.commissionPercentage / 100),
+                availableQuantity: 10,
+                maxQuantity: 10,
+                isAvailable: e.isAvailable,
+                notes: e.notes || '',
+                createdAt: e.createdAt,
+                updatedAt: e.updatedAt,
+            }));
+
+            // Filter to only show available equipments for this vehicle
+            return mappedEquipments.filter((e: Equipment) => e.isAvailable);
 
         } catch (error) {
             // Log but don't throw - equipments are optional
