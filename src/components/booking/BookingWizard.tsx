@@ -8,6 +8,8 @@ import bookingService, { BookingRequest } from '@/services/bookingService';
 import authService from '@/services/authService';
 import Link from 'next/link';
 
+const PAYMENT_BASE_URL = 'https://api.rydeflexi.com/';
+
 interface BookingWizardProps {
     isOpen: boolean;
     onClose: () => void;
@@ -89,9 +91,10 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
 
 
     const handleEquipmentChange = (id: number, delta: number, max: number) => {
+        const safeMax = max || 99;
         setSelectedEquipments(prev => {
             const current = prev[id] || 0;
-            const next = Math.max(0, Math.min(max, current + delta));
+            const next = Math.max(0, Math.min(safeMax, current + delta));
             if (next === 0) {
                 const { [id]: _, ...rest } = prev;
                 return rest;
@@ -138,9 +141,9 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
 
         Object.entries(selectedEquipments).forEach(([idStr, quantity]) => {
             const id = parseInt(idStr);
-            const equip = equipments.find(e => e.id === id);
+            const equip = equipments.find(e => (e.id || e.extraEquipmentId) === id);
             if (equip) {
-                total += equip.fullPriceWithCommission * quantity;
+                total += (equip.fullPriceWithCommission || equip.fullPrice || 0) * (quantity as number);
             }
         });
 
@@ -158,10 +161,11 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
 
         try {
             const equipmentList = Object.entries(selectedEquipments).map(([id, qty]) => {
-                const equip = equipments.find(e => e.id === parseInt(id));
+                const idNum = parseInt(id);
+                const equip = equipments.find(e => (e.id || e.extraEquipmentId) === idNum);
                 return {
-                    equipmentId: equip?.id || parseInt(id),
-                    quantity: qty
+                    equipmentId: equip?.extraEquipmentId || equip?.id || idNum,
+                    quantity: qty as number
                 };
             });
 
@@ -184,7 +188,7 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
             console.log('Response keys:', response ? Object.keys(response) : 'null');
 
             // Try to extract URL from various possible field names
-            let redirectUrl = null;
+            let redirectUrl: any = null;
 
             if (response) {
                 // Check common URL field names
@@ -203,11 +207,37 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                 }
             }
 
-            console.log('Extracted redirect URL:', redirectUrl);
+            console.log('Extracted redirect URL/raw value:', redirectUrl);
 
-            if (redirectUrl && typeof redirectUrl === 'string' && redirectUrl.startsWith('http')) {
-                console.log('Redirecting to:', redirectUrl);
-                window.location.href = redirectUrl;
+            let finalUrl: string | null = null;
+            const base = PAYMENT_BASE_URL.replace(/\/+$/, '');
+
+            if (redirectUrl && typeof redirectUrl === 'string') {
+                if (redirectUrl.startsWith('http')) {
+                    try {
+                        const parsed = new URL(redirectUrl);
+                        const pathAndQuery = `${parsed.pathname}${parsed.search}`;
+                        finalUrl = `${base}${pathAndQuery}`;
+                    } catch {
+                        finalUrl = base;
+                    }
+                } else if (redirectUrl.startsWith('/')) {
+                    finalUrl = `${base}${redirectUrl}`;
+                } else if (redirectUrl.startsWith('?') || redirectUrl.startsWith('&')) {
+                    finalUrl = `${base}${redirectUrl}`;
+                } else {
+                    finalUrl = `${base}?${redirectUrl}`;
+                }
+            } else if (redirectUrl && typeof redirectUrl === 'object') {
+                const query = new URLSearchParams(redirectUrl as Record<string, string>).toString();
+                finalUrl = query ? `${base}?${query}` : base;
+            } else if (!redirectUrl) {
+                finalUrl = base;
+            }
+
+            if (finalUrl && typeof finalUrl === 'string' && finalUrl.startsWith('http')) {
+                console.log('Redirecting to:', finalUrl);
+                window.location.href = finalUrl;
             } else {
                 console.error('No valid redirect URL found in response');
                 setError("Payment URL not received. Please try again.");
@@ -333,59 +363,67 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                                             </div>
                                         ) : (
                                             <div className="grid gap-4">
-                                                {equipments.map(item => (
-                                                    <motion.div
-                                                        key={item.id}
-                                                        whileHover={{ scale: 1.01 }}
-                                                        className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${selectedEquipments[item.id]
+                                                {equipments.map(item => {
+                                                    const itemId = item.id || item.extraEquipmentId;
+                                                    const isSelected = !!selectedEquipments[itemId];
+                                                    const quantity = selectedEquipments[itemId] || 0;
+                                                    const maxQty = item.maxQuantity || 99;
+                                                    const price = item.fullPriceWithCommission || item.fullPrice || 0;
+
+                                                    return (
+                                                        <motion.div
+                                                            key={itemId}
+                                                            whileHover={{ scale: 1.01 }}
+                                                            className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${isSelected
                                                                 ? 'bg-blue-600/10 border-blue-500/50 shadow-lg shadow-blue-500/10'
                                                                 : 'bg-white/5 border-white/10 hover:border-white/20'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${selectedEquipments[item.id] ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-white/5 text-gray-500'
-                                                                }`}>
-                                                                <Plus size={24} />
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-white text-lg">{item.equipmentName}</h4>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-blue-400 font-bold">${item.fullPriceWithCommission.toFixed(2)}</span>
-                                                                    <span className="text-gray-500 text-xs uppercase tracking-tighter">Per Trip</span>
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-white/5 text-gray-500'
+                                                                    }`}>
+                                                                    <Plus size={24} />
                                                                 </div>
-                                                                {item.notes && <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>}
+                                                                <div>
+                                                                    <h4 className="font-bold text-white text-lg">{item.equipmentName}</h4>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-blue-400 font-bold">${price.toFixed(2)}</span>
+                                                                        <span className="text-gray-500 text-xs uppercase tracking-tighter">Per Trip</span>
+                                                                    </div>
+                                                                    {item.notes && <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>}
+                                                                </div>
                                                             </div>
-                                                        </div>
 
-                                                        <div className="flex items-center gap-3">
-                                                            {selectedEquipments[item.id] ? (
-                                                                <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl p-1 px-2">
+                                                            <div className="flex items-center gap-3">
+                                                                {isSelected ? (
+                                                                    <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl p-1 px-2">
+                                                                        <button
+                                                                            onClick={() => handleEquipmentChange(itemId, -1, maxQty)}
+                                                                            className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                                                                        >
+                                                                            <Minus size={16} />
+                                                                        </button>
+                                                                        <span className="w-6 text-center font-bold text-white">{quantity}</span>
+                                                                        <button
+                                                                            onClick={() => handleEquipmentChange(itemId, 1, maxQty)}
+                                                                            disabled={quantity >= maxQty}
+                                                                            className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
+                                                                        >
+                                                                            <Plus size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
                                                                     <button
-                                                                        onClick={() => handleEquipmentChange(item.id, -1, item.maxQuantity)}
-                                                                        className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                                                                        onClick={() => handleEquipmentChange(itemId, 1, maxQty)}
+                                                                        className="px-6 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-white font-bold transition-all hover:border-white/30"
                                                                     >
-                                                                        <Minus size={16} />
+                                                                        Add
                                                                     </button>
-                                                                    <span className="w-6 text-center font-bold text-white">{selectedEquipments[item.id]}</span>
-                                                                    <button
-                                                                        onClick={() => handleEquipmentChange(item.id, 1, item.maxQuantity)}
-                                                                        disabled={selectedEquipments[item.id] >= item.maxQuantity}
-                                                                        className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
-                                                                    >
-                                                                        <Plus size={16} />
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => handleEquipmentChange(item.id, 1, item.maxQuantity)}
-                                                                    className="px-6 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-white font-bold transition-all hover:border-white/30"
-                                                                >
-                                                                    Add
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </motion.div>
-                                                ))}
+                                                                )}
+                                                            </div>
+                                                        </motion.div>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
@@ -520,12 +558,12 @@ export default function BookingWizard({ isOpen, onClose, vehicleId, dailyPrice, 
                                                 <div className="border-b border-white/10 pb-4">
                                                     <span className="text-gray-400 text-sm block mb-2">Extras</span>
                                                     {Object.entries(selectedEquipments).map(([idStr, qty]) => {
-                                                        const item = equipments.find(e => e.id === parseInt(idStr));
+                                                        const item = equipments.find(e => (e.id || e.extraEquipmentId) === parseInt(idStr));
                                                         if (!item) return null;
                                                         return (
                                                             <div key={idStr} className="flex justify-between text-sm mb-1">
-                                                                <span>{item.equipmentName} (x{qty})</span>
-                                                                <span>${(item.fullPriceWithCommission * qty).toFixed(2)}</span>
+                                                                <span>{item.equipmentName} (x{qty as number})</span>
+                                                                <span>${((item.fullPriceWithCommission || item.fullPrice || 0) * (qty as number)).toFixed(2)}</span>
                                                             </div>
                                                         );
                                                     })}
