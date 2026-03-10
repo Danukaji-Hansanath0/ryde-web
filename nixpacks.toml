@@ -1,8 +1,7 @@
-[providers]
-node = true
+providers = ["node"]
 
 [phases.setup]
-nixPkgs = ["node_22"]
+nixPkgs = ["nodejs_22"]
 
 [variables]
 NODE_ENV = "production"
