@@ -3,6 +3,9 @@ providers = ["node"]
 [phases.setup]
 nixPkgs = ["nodejs_22"]
 
+[phases.build]
+cmds = ["npm ci", "npm run build"]
+
 [variables]
 NODE_ENV = "production"
 PORT = "8080"
