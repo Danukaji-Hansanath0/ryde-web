@@ -1,0 +1,13 @@
+[providers]
+node = true
+
+[phases.setup]
+nixPkgs = ["node_22"]
+
+[variables]
+NODE_ENV = "production"
+PORT = "8080"
+HOSTNAME = "0.0.0.0"
+
+[start]
+cmd = "npm run start"
